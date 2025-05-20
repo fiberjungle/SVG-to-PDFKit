@@ -10,7 +10,7 @@ import type PDFDocument from "pdfkit"
  */
 declare function SVGtoPDF(
     doc: typeof PDFDocument,
-    svg: SVGElement | string,
+    svg: any,
     x: number,
     y: number,
     options: SVGtoPDF.Options,
