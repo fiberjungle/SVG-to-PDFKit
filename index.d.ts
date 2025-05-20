@@ -44,7 +44,7 @@ declare namespace SVGtoPDF {
         // same as above for the external SVG documents
         documentCallback?: (
             file: string,
-        ) => SVGElement | string | (SVGElement | string)[]
+        ) => string | (string)[]
 
         // function called to get color, making mapping to CMYK possible
         colorCallback?: (color: Color) => Color
