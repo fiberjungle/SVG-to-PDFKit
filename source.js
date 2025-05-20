@@ -94,6 +94,15 @@ var SVGtoPDF = function(doc, svg, x, y, options) {
       if (Object.keys(doc.page.xobjects).length) {group.resources.data.XObject = doc.page.xobjects;}
       if (Object.keys(doc.page.ext_gstates).length) {group.resources.data.ExtGState = doc.page.ext_gstates;}
       if (Object.keys(doc.page.patterns).length) {group.resources.data.Pattern = doc.page.patterns;}
+        group.resources.data.ColorSpace = (function() {
+          var output = {};
+          var i = 1;
+          for (var item in doc.spotColors) {
+              item = doc.spotColors[item];
+              output[`CS${i++}`] = `${item.id} 0 R`;
+          };
+          return output;
+        })();
       group.resources.end();
       group.xobj.end();
       doc._ctm = group.savedMatrix;
@@ -211,6 +220,7 @@ var SVGtoPDF = function(doc, svg, x, y, options) {
       doc.addContent('ET');
     }
     function docFillColor(color) {
+      color = typeof color === 'string' ? [color] : color;
       if (color[0].type === 'PDFPattern') {
         doc.fillOpacity(color[1]);
         docUsePattern(color[0], false);
@@ -219,6 +229,7 @@ var SVGtoPDF = function(doc, svg, x, y, options) {
       }
     }
     function docStrokeColor(color) {
+      color = typeof color === 'string' ? [color] : color;
       if (color[0].type === 'PDFPattern') {
         doc.strokeOpacity(color[1]);
         docUsePattern(color[0], true);
@@ -1398,7 +1409,9 @@ var SVGtoPDF = function(doc, svg, x, y, options) {
                 } else if (parsed = (value || '').split(' ')) {
                   let object = this.resolveUrl(parsed[0]),
                       fallbackColor = parseColor(parsed[1]);
-                  if (object == null) {
+                  if (object === undefined) {
+                    result = doc.spotColors[value] ? value : undefined;
+                  } else if (object == null) {
                     result = fallbackColor;
                   } else if (object.nodeName === 'linearGradient' || object.nodeName === 'radialGradient') {
                     result = new SvgElemGradient(object, null, fallbackColor);
@@ -1442,6 +1455,12 @@ var SVGtoPDF = function(doc, svg, x, y, options) {
                 break;
               case 'stroke-dashoffset':
                 result = this.computeLength(value, this.getViewport());
+                if (result != null) {
+                  if (result < 0) {
+                    let dasharray = this.get('stroke-dasharray');
+                    for (let j = 0; j < dasharray.length; j++) {result += dasharray[j];}
+                  }
+                }
                 break;
             }
             if (result != null) {return styleCache[key] = result;}
@@ -1511,6 +1530,8 @@ var SVGtoPDF = function(doc, svg, x, y, options) {
         if (fill !== 'none' && opacity && fillOpacity) {
           if (fill instanceof SvgElemGradient || fill instanceof SvgElemPattern) {
             return fill.getPaint(this.getBoundingBox(), fillOpacity * opacity, isClip, isMask);
+          } else if (typeof fill === 'string') {
+            return fill;
           }
           return opacityToColor(fill, fillOpacity * opacity, isMask);
         }
@@ -1523,6 +1544,8 @@ var SVGtoPDF = function(doc, svg, x, y, options) {
         if (stroke !== 'none' && opacity && strokeOpacity) {
           if (stroke instanceof SvgElemGradient || stroke instanceof SvgElemPattern) {
             return stroke.getPaint(this.getBoundingBox(), strokeOpacity * opacity, isClip, isMask);
+          } else if (typeof stroke === 'string') {
+            return stroke;
           }
           return opacityToColor(stroke, strokeOpacity * opacity, isMask);
         }
