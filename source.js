@@ -220,7 +220,7 @@ var SVGtoPDF = function(doc, svg, x, y, options) {
       doc.addContent('ET');
     }
     function docFillColor(color) {
-      color = typeof color === 'string' ? [color] : color;
+      color = typeof color === 'string' ? [color, 1] : color;
       if (color[0].type === 'PDFPattern') {
         doc.fillOpacity(color[1]);
         docUsePattern(color[0], false);
@@ -229,7 +229,7 @@ var SVGtoPDF = function(doc, svg, x, y, options) {
       }
     }
     function docStrokeColor(color) {
-      color = typeof color === 'string' ? [color] : color;
+      color = typeof color === 'string' ? [color, 1] : color;
       if (color[0].type === 'PDFPattern') {
         doc.strokeOpacity(color[1]);
         docUsePattern(color[0], true);
